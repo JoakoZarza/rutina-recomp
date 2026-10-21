@@ -29,6 +29,8 @@ const S = {
   pending: null,      // 'finish' | 'discard'
   pendingDel: null,
   query: '',
+  picker: false,      // selector de modo/variante abierto
+  warmOpen: false,    // calentamiento completo pero desplegado
 };
 
 /** Variante activa del modo: la elegida, la que tiene una sesión en curso, o la que toca. */
@@ -169,6 +171,8 @@ function finishSession() {
   saveDrafts();
   delete S.sel[S.mode];
   S.tplId = templateFor(S.mode); // la próxima vez toca la otra variante
+  S.picker = false;
+  S.warmOpen = false;
   stopTimer();
   try { wake?.release(); } catch { /* nada */ }
   render();
@@ -214,16 +218,18 @@ function importData() {
 
 const actions = {
   view: (b) => { S.view = b.dataset.v; S.pending = null; S.pendingDel = null; render(); scrollTo(0, 0); },
-  mode: (b) => { S.mode = b.dataset.mode; S.tplId = templateFor(S.mode); S.pending = null; render(); },
+  picker: () => { S.picker = !S.picker; render(); },
+  mode: (b) => { S.mode = b.dataset.mode; S.tplId = templateFor(S.mode); S.pending = null; S.warmOpen = false; render(); },
   variant: (b) => { S.sel[S.mode] = b.dataset.tpl; S.tplId = b.dataset.tpl; S.pending = null; render(); },
-  warm: (b) => { const d = draft(true); d.warm[b.dataset.i] = !d.warm[b.dataset.i]; markStart(); saveDrafts(); render(); },
+  warm: (b) => { const d = draft(true); d.warm[b.dataset.i] = !d.warm[b.dataset.i]; S.warmOpen = false; markStart(); saveDrafts(); render(); },
+  'warm-open': () => { S.warmOpen = true; render(); },
   wtimer: (b) => { markStart(); startTimer(+b.dataset.s, b.dataset.l); render(); },
   rest: (b) => startTimer(+b.dataset.s, 'Descanso manual'),
   tadd: (b) => addTime(+b.dataset.s),
   tskip: () => stopTimer(),
   info: (b) => {
     const slot = S.view === 'train' ? b.dataset.slot : undefined;
-    openInfo(b.dataset.ex, { hist: S.hist, slot, current: b.dataset.ex, focusSwap: b.classList.contains('swap') });
+    openInfo(b.dataset.ex, { hist: S.hist, slot, current: b.dataset.ex });
   },
   'info-close': () => closeInfo(),
   swap: (b) => swapExercise(b.dataset.slot, b.dataset.ex),

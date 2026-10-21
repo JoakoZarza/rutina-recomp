@@ -18,7 +18,7 @@ Es un sitio estático sin build: en Vercel, **Add New → Project**, importar es
 
 - `vercel.json` evita que el navegador guarde `sw.js` en caché y sirve el manifest con su tipo correcto.
 - `.vercelignore` deja afuera `artifact.html` (la entrada de la versión publicada en Claude) y este README.
-- **En cada deploy que cambie archivos de la app, subí el número de `CACHE` en `sw.js`** (`recomp-v3` → `recomp-v4`). Así los celulares que la tienen instalada descartan la copia vieja.
+- **En cada deploy que cambie archivos de la app, subí el número de `CACHE` en `sw.js`** (`recomp-v4` → `recomp-v5`). Así los celulares que la tienen instalada descartan la copia vieja.
 
 Con HTTPS se puede instalar en el celular: en iPhone, Safari → Compartir → *Agregar a inicio*; en Android, Chrome → *Instalar app*. Después abre sin señal gracias al service worker.
 

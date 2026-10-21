@@ -24,19 +24,18 @@ export function lastFor(hist, exId) {
 export function suggest(ex, nSets, hist) {
   const last = lastFor(hist, ex.id);
   if (!last) {
-    return { kind: 'first', html: `Primera vez: elegí un peso con el que hagas ${ex.reps} reps dejando 2 en reserva. Rango de progresión ${ex.lo}–${ex.hi}.` };
+    return { kind: 'first', html: `Primera vez · ${ex.reps} reps con 2 en reserva` };
   }
   const done = last.sets.filter((s) => s.done);
   const top = Math.max(...done.map((s) => num(s.kg) || 0));
-  const when = new Date(last.date).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
   const reachedTop = done.length >= nSets && done.every((s) => (num(s.reps) || 0) >= ex.hi);
 
   if (reachedTop) {
-    const next = ex.inc ? `<b class="mono">${fmtKg(top + ex.inc)} kg</b> × ${ex.lo}+` : `<b>${ex.incText}</b> × ${ex.lo}+`;
-    return { kind: 'up', html: `Meta de hoy: ${next}. El ${when} llegaste a ${ex.hi} reps en todas las series.` };
+    const next = ex.inc ? `<b class="mono">${fmtKg(top + ex.inc)} kg</b>` : `<b>${ex.incText}</b>`;
+    return { kind: 'up', html: `Meta ${next} × ${ex.lo}+` };
   }
   const total = done.reduce((a, s) => a + (num(s.reps) || 0), 0);
-  return { kind: 'same', html: `Meta de hoy: <b class="mono">${fmtKg(top)} kg</b> y superar ${total} reps totales (${when}). Con ${ex.hi} en todas, se sube.` };
+  return { kind: 'same', html: `Meta <b class="mono">${fmtKg(top)} kg</b> · más de ${total} reps` };
 }
 
 export function volume(sets) {

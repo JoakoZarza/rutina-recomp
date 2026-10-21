@@ -66,6 +66,7 @@ function tick() {
       label.textContent = state.label;
       ring.style.strokeDashoffset = CIRC * (1 - Math.min(1, left / state.total));
       run.classList.toggle('low', left <= 10);
+      dock.classList.remove('is-idle');
       return;
     }
     state.end = 0;
@@ -80,6 +81,7 @@ function tick() {
   } else {
     idle.hidden = false; run.hidden = true; dock.classList.remove('go');
   }
+  dock.classList.toggle('is-idle', !idle.hidden);
 }
 
 export function initTimer() {

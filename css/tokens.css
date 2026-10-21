@@ -25,6 +25,6 @@
   --f-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
 
   --r: 10px;
-  --dock-h: 150px;
+  --dock-h: 110px;
   color-scheme: dark;
 }

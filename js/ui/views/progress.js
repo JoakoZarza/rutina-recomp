@@ -2,6 +2,7 @@
 import { EXERCISES, GROUPS, PATTERNS } from '../../data/exercises.js';
 import { MODES, TPL } from '../../data/templates.js';
 import { seriesFor, volume, fmtKg } from '../../core/progression.js';
+import { CYCLE_WEEKS, mondayOf } from '../../core/planner.js';
 import { esc, hmm, dayLabel } from '../dom.js';
 
 function spark(pts) {
@@ -33,6 +34,16 @@ export function renderProgress(S) {
     <div class="kpi p"><b class="mono">${totalVol >= 1000 ? `${fmtKg(Math.round(totalVol / 100) / 10)}t` : fmtKg(Math.round(totalVol))}</b><small>Kg movidos</small></div>
   </div>`;
 
+  const rotate = new Date(mondayOf(S.prefs.start) + (S.cycle.cycle + 1) * CYCLE_WEEKS * 7 * 864e5)
+    .toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short' });
+  const cycle = `<section class="card cycle">
+    <div class="cycle-n"><span class="eyebrow">Ciclo</span><b class="mono">${S.cycle.cycle + 1}</b></div>
+    <div class="cycle-t">
+      <div class="cycle-w" aria-label="Semana ${S.cycle.week} de ${CYCLE_WEEKS}">${Array.from({ length: CYCLE_WEEKS }, (_, i) => `<i class="${i < S.cycle.week ? 'on' : ''}"></i>`).join('')}</div>
+      <p>Semana ${S.cycle.week} de ${CYCLE_WEEKS}. Los ejercicios rotan el ${rotate}; hasta entonces se repiten para que puedas superar tus marcas.</p>
+    </div>
+  </section>`;
+
   const groups = Object.entries(GROUPS).map(([g, label]) => {
     const rows = EXERCISES.filter((e) => PATTERNS[e.pattern]?.group === g).map((e) => {
       const s = seriesFor(hist, e.id);
@@ -62,6 +73,7 @@ export function renderProgress(S) {
   <div class="head"><h1>Progreso</h1>
     <p class="why">Serie más pesada de cada sesión y 1RM estimado (Epley). En recomposición, mantener o subir la fuerza mientras baja el peso corporal es la señal de que estás conservando músculo.</p></div>
   ${kpis}
+  ${cycle}
   ${groups}
   <section class="pgroup"><div class="sec-t"><h2>Historial</h2><span>últimas 30</span></div><div class="card list">${hrows}</div></section>
   <section class="card tips">

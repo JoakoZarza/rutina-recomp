@@ -18,7 +18,7 @@ function progressionText(ex) {
 
 /**
  * @param {string} exId
- * @param {{hist: any[], slot?: string, current?: string, focusSwap?: boolean}} ctx  slot presente = permite cambiar
+ * @param {{hist: any[], slot?: string, current?: string}} ctx  slot presente = permite cambiar
  */
 export function openInfo(exId, ctx) {
   const ex = EX[exId];
@@ -50,14 +50,13 @@ export function openInfo(exId, ctx) {
     <ol class="how">${ex.how.map((h) => `<li>${esc(h)}</li>`).join('')}</ol>
     ${ex.pattern !== 'warm' ? `<h3 class="info-s">Cómo progresar</h3><p class="prog">${progressionText(ex)}</p>` : ''}
     ${lastTxt ? `<p class="last"><span>Última vez</span> <span class="mono">${lastTxt}</span></p>` : ''}
-    ${alts ? `<h3 class="info-s" id="altsTitle">Cambiar por</h3><p class="alts-hint">El cambio queda para lo que resta del ciclo, así podés seguir la progresión.</p><div class="alts">${alts}</div>` : ''}
+    ${alts ? `<h3 class="info-s">Cambiar por</h3><p class="alts-hint">El cambio queda para lo que resta del ciclo, así podés seguir la progresión.</p><div class="alts">${alts}</div>` : ''}
   `;
 
   stop();
   stop = playFigure($('#infoFig'), ex.fig);
   if (!dlg.open) dlg.showModal();
   $('#infoBody').scrollTop = 0;
-  if (ctx.focusSwap) $('#altsTitle')?.scrollIntoView({ block: 'start' });
 }
 
 export function closeInfo() {
