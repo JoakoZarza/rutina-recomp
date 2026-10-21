@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#090b08">
+<meta name="description" content="Rutina de gimnasio para recomposición corporal: registro de cargas, progresión y temporizador de descanso.">
+<title>Rutina Recomp</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Recomp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Archivo:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">Rutina <b>Recomp</b></div>
+    <nav class="nav" aria-label="Secciones">
+      <button id="nav-train" data-act="view" data-v="train" aria-current="page">Entrenar</button>
+      <button id="nav-prog" data-act="view" data-v="prog">Progreso</button>
+      <button id="nav-lib" data-act="view" data-v="lib">Ejercicios</button>
+    </nav>
+  </div>
+  <div class="wrap clock" id="clock">
+    <span class="mono" id="clockT">0:00:00</span>
+    <div class="bar" id="clockBar"><i></i></div>
+    <small>de 1:30 h</small>
+  </div>
+</header>
+
+<main class="wrap" id="main">
+  <noscript><p>Esta app necesita JavaScript.</p></noscript>
+</main>
+
+<dialog class="info" id="info" aria-labelledby="infoTitle">
+  <div class="info-body" id="infoBody"></div>
+</dialog>
+
+<div class="dock" aria-live="polite">
+  <div class="dock-in" id="dockIn">
+    <div class="idle" id="tIdle">
+      <span class="lb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>Descanso</span>
+      <div class="presets">
+        <button id="p60" data-act="rest" data-s="60">60</button>
+        <button id="p90" data-act="rest" data-s="90">90</button>
+        <button id="p120" data-act="rest" data-s="120">120</button>
+        <button id="p180" data-act="rest" data-s="180">180</button>
+      </div>
+    </div>
+    <div class="run" id="tRun" hidden>
+      <svg class="ring" viewBox="0 0 56 56" aria-hidden="true"><circle class="bgc" cx="28" cy="28" r="24"/><circle class="fgc" id="tRing" cx="28" cy="28" r="24"/></svg>
+      <div class="tm"><div class="tt" id="tTime">1:30</div><div class="tl" id="tLabel">Descanso</div></div>
+      <div class="tbtns">
+        <button id="tMinus" data-act="tadd" data-s="-15" aria-label="Restar 15 segundos">−15</button>
+        <button id="tPlus" data-act="tadd" data-s="15" aria-label="Sumar 15 segundos">+15</button>
+        <button id="tSkip" class="skip" data-act="tskip">Listo</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+</body>
+</html>

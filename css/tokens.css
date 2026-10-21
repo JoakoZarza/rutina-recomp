@@ -1,0 +1,30 @@
+/*
+ * Tokens de diseño. Tema único oscuro (decisión de producto: se usa en el gym).
+ * Negro con sesgo verde + verde lima como color principal; violeta para datos
+ * del pasado y equipamiento; mostaza para calentamiento, tiempos e implementos.
+ * Regla de estilo: líneas y bordes de color, rellenos sólo para estados activos.
+ */
+:root {
+  --bg: #090b08;
+  --surface: #0f120d;
+  --line: #242a20;
+  --line-2: #353d2e;
+  --fg: #eef2e6;
+  --muted: #8a9480;
+
+  --lime: #c4f542;
+  --lime-soft: rgba(196, 245, 66, 0.1);
+  --purple: #a68cff;
+  --purple-soft: rgba(166, 140, 255, 0.1);
+  --mustard: #d9a82e;
+  --mustard-soft: rgba(217, 168, 46, 0.1);
+  --danger: #ff6f61;
+
+  --f-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --f-body: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  --r: 10px;
+  --dock-h: 150px;
+  color-scheme: dark;
+}
