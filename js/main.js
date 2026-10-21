@@ -1,14 +1,14 @@
 /**
  * Punto de entrada: estado de la app, render de vistas y manejo de eventos.
  */
-import { TEMPLATES, TPL, WEEK_SUGGESTION } from './data/templates.js';
+import { TEMPLATES, TPL, WARMUPS, WEEK_SUGGESTION } from './data/templates.js';
 import { buildSession, cycleInfo, nextTemplate, slotKey } from './core/planner.js';
 import { num } from './core/progression.js';
 import * as store from './core/storage.js';
 import { $, toast, hmm } from './ui/dom.js';
 import { initTimer, startTimer, addTime, stopTimer, unlockAudio } from './ui/timer.js';
 import { initInfo, openInfo, closeInfo } from './ui/info.js';
-import { renderTrain } from './ui/views/train.js';
+import { renderTrain, warmDone } from './ui/views/train.js';
 import { renderProgress } from './ui/views/progress.js';
 import { renderLibrary } from './ui/views/library.js';
 import { EX } from './data/exercises.js';
@@ -29,7 +29,8 @@ const S = {
   pending: null,      // 'finish' | 'discard'
   pendingDel: null,
   query: '',
-  picker: false,      // selector de modo/variante abierto
+  choosing: false,    // pantalla de elección abierta desde "Cambiar"
+  pick: null,         // { mode, tpl } elegidos en esa pantalla
   warmOpen: false,    // calentamiento completo pero desplegado
 };
 
@@ -85,6 +86,8 @@ function render() {
   if (S.view === 'train') main.innerHTML = renderTrain(S, session(), rowsOf);
   else if (S.view === 'prog') main.innerHTML = renderProgress(S);
   else main.innerHTML = renderLibrary(S);
+  // El timer sólo tiene sentido con una sesión en marcha.
+  $('.dock').hidden = !S.drafts[S.tplId]?.start || S.choosing;
   tickClock();
 }
 
@@ -117,6 +120,11 @@ function markStart() {
 }
 
 /* ---------------- Acciones ---------------- */
+function unlocked() {
+  toast('Calentamiento listo · a entrenar');
+  $('#block-A')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function checkSet(row) {
   const slot = row.dataset.slot, i = +row.dataset.i;
   const found = findItem(slot);
@@ -171,7 +179,8 @@ function finishSession() {
   saveDrafts();
   delete S.sel[S.mode];
   S.tplId = templateFor(S.mode); // la próxima vez toca la otra variante
-  S.picker = false;
+  S.choosing = false;
+  S.pick = null;
   S.warmOpen = false;
   stopTimer();
   try { wake?.release(); } catch { /* nada */ }
@@ -218,10 +227,38 @@ function importData() {
 
 const actions = {
   view: (b) => { S.view = b.dataset.v; S.pending = null; S.pendingDel = null; render(); scrollTo(0, 0); },
-  picker: () => { S.picker = !S.picker; render(); },
-  mode: (b) => { S.mode = b.dataset.mode; S.tplId = templateFor(S.mode); S.pending = null; S.warmOpen = false; render(); },
-  variant: (b) => { S.sel[S.mode] = b.dataset.tpl; S.tplId = b.dataset.tpl; S.pending = null; render(); },
-  warm: (b) => { const d = draft(true); d.warm[b.dataset.i] = !d.warm[b.dataset.i]; S.warmOpen = false; markStart(); saveDrafts(); render(); },
+  /* Etapa 1: elegir tipo y clase */
+  change: () => { S.choosing = true; S.pick = { mode: S.mode, tpl: S.tplId }; S.pending = null; render(); scrollTo(0, 0); },
+  'choose-mode': (b) => { S.pick = { mode: b.dataset.mode, tpl: templateFor(b.dataset.mode) }; render(); },
+  'choose-tpl': (b) => { S.pick = { ...S.pick, tpl: b.dataset.tpl }; render(); },
+  'choose-cancel': () => { S.choosing = false; S.pick = null; render(); },
+  start: () => {
+    S.mode = S.pick.mode;
+    S.tplId = S.sel[S.mode] = S.pick.tpl;
+    S.choosing = false; S.pick = null; S.warmOpen = false;
+    markStart();
+    render();
+    scrollTo(0, 0);
+  },
+  /* Etapa 2: calentamiento → al completarlo se habilitan los ejercicios */
+  warm: (b) => {
+    const d = draft(true);
+    d.warm[b.dataset.i] = !d.warm[b.dataset.i];
+    const first = !d.unlocked && warmDone(S.mode, d);
+    if (first) d.unlocked = true; // una vez habilitados, los ejercicios no se vuelven a ocultar
+    saveDrafts();
+    S.warmOpen = false;
+    render();
+    if (first) unlocked();
+  },
+  'warm-skip': () => {
+    const d = draft(true);
+    WARMUPS[S.mode].forEach((_, i) => { d.warm[i] = true; });
+    d.unlocked = true;
+    saveDrafts();
+    render();
+    unlocked();
+  },
   'warm-open': () => { S.warmOpen = true; render(); },
   wtimer: (b) => { markStart(); startTimer(+b.dataset.s, b.dataset.l); render(); },
   rest: (b) => startTimer(+b.dataset.s, 'Descanso manual'),

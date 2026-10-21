@@ -4,7 +4,7 @@
  * nueva cuando hay conexión y usa la copia guardada cuando no la hay.
  */
 // Subí este número en cada deploy que cambie archivos de la app.
-const CACHE = 'recomp-v4';
+const CACHE = 'recomp-v5';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './assets/icon.svg', './assets/icon-192.png', './assets/icon-512.png', './assets/apple-touch-icon.png',

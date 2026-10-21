@@ -1,9 +1,11 @@
 /**
- * Vista "Entrenar": la sesión de hoy y sus series. Todo lo demás (cambiar de
- * modo, variante, ficha del ejercicio) aparece sólo cuando se pide.
+ * Vista "Entrenar", en tres etapas para no saturar:
+ *   1. Elegir   tipo de entrenamiento y clase (variante).
+ *   2. Calentar el calentamiento es lo único activo.
+ *   3. Entrenar al tildar todo el calentamiento se habilitan los ejercicios.
  */
 import { MODES, TEMPLATES, WARMUPS, WEEK_SUGGESTION } from '../../data/templates.js';
-import { estimateMinutes } from '../../core/planner.js';
+import { estimateMinutes, nextTemplate } from '../../core/planner.js';
 import { lastFor, suggest, volume, fmtKg, num } from '../../core/progression.js';
 import { esc, hmm, mmss, ICON } from '../dom.js';
 import { figureStatic } from '../figure.js';
@@ -25,32 +27,53 @@ export function draftSets(draft) {
   return out;
 }
 
-/** Selector de modo y variante: sólo visible al tocar "Cambiar". */
-function picker(S) {
+export const warmDone = (mode, draft) => WARMUPS[mode].every((_, i) => draft?.warm?.[i]);
+
+/* ---------------- Etapa 1: elegir ---------------- */
+function chooser(S) {
   const today = WEEK_SUGGESTION[new Date().getDay()];
+  const pick = S.pick || {};
+
   const modes = Object.entries(MODES).map(([id, m]) => {
     const live = TEMPLATES[id].some((t) => S.drafts[t.id]?.start);
-    return `<button class="mode" id="mode-${id}" data-act="mode" data-mode="${id}" aria-pressed="${id === S.mode}">
-      <span class="mode-t">${m.label}${live ? '<i class="dot" title="Sesión en curso"></i>' : ''}</span>
-      <span class="mode-s">${esc(m.hint)}${id === today ? ' <em>Sugerido hoy</em>' : ''}</span>
+    return `<button class="choice" id="mode-${id}" data-act="choose-mode" data-mode="${id}" aria-pressed="${id === pick.mode}">
+      <span class="choice-t">${m.label}${live ? '<i class="dot" title="Sesión en curso"></i>' : ''}</span>
+      <span class="choice-s">${esc(m.hint)}</span>
+      ${id === today ? '<span class="badge">Sugerido hoy</span>' : ''}
     </button>`;
   }).join('');
-  const variants = TEMPLATES[S.mode].map((t) =>
-    `<button class="seg" id="var-${t.id}" data-act="variant" data-tpl="${t.id}" aria-pressed="${t.id === S.tplId}">${esc(t.name.split(' ').pop())}</button>`).join('');
-  return `<div class="picker card" id="picker">
-    <div class="modes" role="group" aria-label="Tipo de sesión">${modes}</div>
-    <div class="variant-row"><span>Variante</span><div class="segs" role="group" aria-label="Variante">${variants}</div></div>
-  </div>`;
+
+  let classes = '';
+  if (pick.mode) {
+    const next = nextTemplate(pick.mode, S.hist).id;
+    classes = `<h2 class="choose-s">Clase</h2>
+    <div class="choices two">${TEMPLATES[pick.mode].map((t) => `
+      <button class="choice" id="tpl-${t.id}" data-act="choose-tpl" data-tpl="${t.id}" aria-pressed="${t.id === pick.tpl}">
+        <span class="choice-t">${esc(t.name)}</span>
+        <span class="choice-s">${esc(t.tag)} · ≈ ${estimateMinutes(t)} min</span>
+        ${t.id === next ? '<span class="badge p">Te toca</span>' : ''}
+      </button>`).join('')}
+    </div>`;
+  }
+
+  const live = S.drafts[S.tplId]?.start;
+  return `<section class="choose">
+    <span class="eyebrow">Hoy</span>
+    <h1>¿Qué entrenás?</h1>
+    <div class="choices">${modes}</div>
+    ${classes}
+    ${pick.tpl ? `<button class="btn solid start" id="start" data-act="start">${S.drafts[pick.tpl]?.start ? 'Continuar sesión' : 'Empezar calentamiento'}</button>` : ''}
+    ${S.choosing && live ? '<button class="btn ghost start" id="choose-cancel" data-act="choose-cancel">Volver a la sesión</button>' : ''}
+  </section>`;
 }
 
-function warmup(S, draft) {
-  const items = WARMUPS[S.mode];
-  const allDone = items.every((_, i) => draft?.warm?.[i]);
-  if (allDone && !S.warmOpen) {
+/* ---------------- Etapa 2: calentar ---------------- */
+function warmup(S, draft, done) {
+  if (done && warmDone(S.mode, draft) && !S.warmOpen) {
     return `<button class="card warm warm-done" id="warm-open" data-act="warm-open">
       <span class="tick on">${ICON.check}</span><span>Calentamiento listo</span><small>ver</small></button>`;
   }
-  const rows = items.map((w, i) => {
+  const rows = WARMUPS[S.mode].map((w, i) => {
     const on = !!draft?.warm?.[i];
     const name = w.ex ? `<button class="link" data-act="info" data-ex="${w.ex}">${esc(w.t)}</button>` : esc(w.t);
     return `<div class="witem ${on ? 'on' : ''}">
@@ -59,12 +82,13 @@ function warmup(S, draft) {
       ${w.timer ? `<button class="btn-o m" id="wt-${i}" data-act="wtimer" data-s="${w.timer}" data-l="${esc(w.t)}">${mmss(w.timer)}</button>` : '<span></span>'}
     </div>`;
   }).join('');
-  return `<section class="card warm">
+  return `<section class="card warm ${done ? '' : 'active'}">
     <div class="sec-t"><h2>Calentamiento</h2><span>≈ 16 min · después, sólo fuerza</span></div>
     <div class="witems">${rows}</div>
   </section>`;
 }
 
+/* ---------------- Etapa 3: entrenar ---------------- */
 function exerciseCard(S, b, it, rows) {
   const ex = it.ex, sg = suggest(ex, b.sets, S.hist), last = lastFor(S.hist, ex.id);
   const prev = last ? last.sets : [];
@@ -101,7 +125,6 @@ function exerciseCard(S, b, it, rows) {
 }
 
 function closing(S, draft, c) {
-  if (!c.done && !draft?.start) return '';
   const el = draft?.start ? Date.now() - draft.start : 0;
   let actions;
   if (S.pending === 'finish') {
@@ -131,8 +154,29 @@ function closing(S, draft, c) {
  */
 export function renderTrain(S, session, rowsOf) {
   const draft = S.drafts[S.tplId];
+  if (S.choosing || !draft?.start) return chooser(S);
+
   const tpl = session.tpl;
-  const c = countDone(draft, session);
+  const done = !!draft.unlocked || warmDone(S.mode, draft);
+  const nEx = session.blocks.reduce((n, b) => n + b.items.length, 0);
+
+  const header = `<div class="today">
+    <div class="today-t">
+      <span class="eyebrow">Hoy</span>
+      <h1>${esc(tpl.name)}</h1>
+      <p class="today-s">≈ ${estimateMinutes(tpl)} min · ${esc(tpl.tag)}</p>
+    </div>
+    <button class="btn-o p" id="change" data-act="change">Cambiar</button>
+  </div>`;
+
+  if (!done) {
+    return `${header}
+    ${warmup(S, draft, false)}
+    <div class="locked">
+      <p>Los ${nEx} ejercicios se habilitan cuando completes el calentamiento.</p>
+      <button class="link" id="warm-skip" data-act="warm-skip">Ya calenté</button>
+    </div>`;
+  }
 
   const blocks = session.blocks.map((b) => {
     let bd = 0;
@@ -142,7 +186,7 @@ export function renderTrain(S, session, rowsOf) {
       return exerciseCard(S, b, it, rows);
     }).join('');
     const bt = b.sets * b.items.length;
-    return `<section class="block">
+    return `<section class="block" id="block-${b.code}">
       <div class="bhead"><span class="bcode" aria-hidden="true">${b.code}</span>
         <div><div class="bt">${esc(b.title)}</div><div class="bs">${b.sets} rondas · descanso ${b.rest} s</div></div>
         <span class="bprog mono ${bd === bt ? 'full' : ''}">${bd}/${bt}</span></div>
@@ -150,17 +194,8 @@ export function renderTrain(S, session, rowsOf) {
     </section>`;
   }).join('');
 
-  return `
-  <div class="today">
-    <div class="today-t">
-      <span class="eyebrow">Hoy</span>
-      <h1>${esc(tpl.name)}</h1>
-      <p class="today-s">≈ ${estimateMinutes(tpl)} min · ${esc(tpl.tag)}</p>
-    </div>
-    <button class="btn-o" id="pick" data-act="picker" aria-expanded="${!!S.picker}" aria-controls="picker">${S.picker ? 'Listo' : 'Cambiar'}</button>
-  </div>
-  ${S.picker ? picker(S) : ''}
-  ${warmup(S, draft)}
+  return `${header}
+  ${warmup(S, draft, true)}
   ${blocks}
-  ${closing(S, draft, c)}`;
+  ${closing(S, draft, countDone(draft, session))}`;
 }

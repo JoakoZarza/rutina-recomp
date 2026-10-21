@@ -18,12 +18,13 @@ Es un sitio estático sin build: en Vercel, **Add New → Project**, importar es
 
 - `vercel.json` evita que el navegador guarde `sw.js` en caché y sirve el manifest con su tipo correcto.
 - `.vercelignore` deja afuera `artifact.html` (la entrada de la versión publicada en Claude) y este README.
-- **En cada deploy que cambie archivos de la app, subí el número de `CACHE` en `sw.js`** (`recomp-v4` → `recomp-v5`). Así los celulares que la tienen instalada descartan la copia vieja.
+- **En cada deploy que cambie archivos de la app, subí el número de `CACHE` en `sw.js`** (`recomp-v5` → `recomp-v6`). Así los celulares que la tienen instalada descartan la copia vieja.
 
 Con HTTPS se puede instalar en el celular: en iPhone, Safari → Compartir → *Agregar a inicio*; en Android, Chrome → *Instalar app*. Después abre sin señal gracias al service worker.
 
 ## Cómo está pensada la rutina
 
+- **Flujo progresivo**: primero se elige tipo y clase; después sólo está activo el calentamiento; al completarlo se habilitan los ejercicios ("Ya calenté" lo saltea).
 - **Modos**: Mixto, Superior e Inferior. La app sugiere uno según el día (Lun mixto, Mié superior, Vie/Sáb inferior), pero se elige libremente: si las piernas vienen cargadas del CrossFit, Superior.
 - **Variantes**: cada modo tiene dos plantillas (A/B) que se alternan solas según el historial.
 - **Pool y ciclos**: las plantillas piden patrones de movimiento (sentadilla, bisagra, empuje horizontal…), no ejercicios. Cada 4 semanas rota el ejercicio elegido de cada patrón. Dentro del ciclo se mantiene para poder progresar en cargas. Cualquier ejercicio se puede cambiar por otro del mismo patrón y el cambio dura hasta fin del ciclo.
